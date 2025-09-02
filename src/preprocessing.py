@@ -9,7 +9,6 @@ Preprocessing script for sentiment analysis demo.
 
 import logging
 from pathlib import Path
-
 from typing import Tuple
 
 import nltk
@@ -53,9 +52,9 @@ def load_movie_reviews() -> pd.DataFrame:
 
 
 def split_dataset(
-    df: pd.DataFrame,
-    test_size: float = TEST_SIZE,
-    random_state: int = RANDOM_STATE
+        df: pd.DataFrame,
+        test_size: float = TEST_SIZE,
+        random_state: int = RANDOM_STATE
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Split dataset into train and test sets.

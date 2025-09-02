@@ -1,0 +1,71 @@
+name: AI QA Pipeline
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+
+      # 3️⃣ Cache Python dependencies
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4️⃣ Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install dvc
+
+      # 5️⃣ Cache DVC local cache
+      - name: Cache DVC cache
+        uses: actions/cache@v3
+        with:
+          path: .dvc/cache
+          key: ${{ runner.os }}-dvc-cache
+          restore-keys: |
+            ${{ runner.os }}-dvc-cache
+
+      # 6️⃣ Configure DVC remote and pull data
+      - name: Configure DVC
+        run: |
+          # Use relative path for portability or replace with cloud remote
+          dvc remote add -d localremote ./dvc_remote || true
+          dvc pull
+
+      # 7️⃣ Run preprocessing
+      - name: Preprocess data
+        run: python src/preprocessing.py
+
+      # 8️⃣ Train model
+      - name: Train model
+        run: python src/train.py
+
+      # 9️⃣ Run AI QA tests
+      - name: Run AI QA tests
+        run: pytest tests/ -v
+
+      # 🔟 Push updated data/model to DVC
+      - name: Push updated data/model to DVC
+        run: dvc push
